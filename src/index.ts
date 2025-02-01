@@ -33,6 +33,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { character } from "./character.ts";
 import type { DirectClient } from "@ai16z/client-direct";
+const API_URL = process.env.API_URL || "http://localhost:3000";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -65,7 +66,7 @@ export function parseArguments(): {
 }
 
 export async function loadCharacters(
-  charactersArg: string
+  charactersArg: string,
 ): Promise<Character[]> {
   let characterPaths = charactersArg?.split(",").map((filePath) => {
     if (path.basename(filePath) === filePath) {
@@ -102,7 +103,7 @@ export async function loadCharacters(
 
 export function getTokenForProvider(
   provider: ModelProviderName,
-  character: Character
+  character: Character,
 ) {
   switch (provider) {
     case ModelProviderName.OPENAI:
@@ -163,7 +164,7 @@ function initializeDatabase(dataDir: string) {
 
 export async function initializeClients(
   character: Character,
-  runtime: IAgentRuntime
+  runtime: IAgentRuntime,
 ) {
   const clients = [];
   const clientTypes = character.clients?.map((str) => str.toLowerCase()) || [];
@@ -204,12 +205,12 @@ export function createAgent(
   character: Character,
   db: IDatabaseAdapter,
   cache: ICacheManager,
-  token: string
+  token: string,
 ) {
   elizaLogger.success(
     elizaLogger.successesTitle,
     "Creating runtime for character",
-    character.name
+    character.name,
   );
   return new AgentRuntime({
     databaseAdapter: db,
@@ -271,7 +272,7 @@ async function startAgent(character: Character, directClient: DirectClient) {
   } catch (error) {
     elizaLogger.error(
       `Error starting agent for character ${character.name}:`,
-      error
+      error,
     );
     console.error(error);
     throw error;
@@ -337,18 +338,15 @@ async function handleUserInput(input, agentId) {
   try {
     const serverPort = parseInt(settings.SERVER_PORT || "3000");
 
-    const response = await fetch(
-      `http://localhost:${serverPort}/${agentId}/message`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: input,
-          userId: "user",
-          userName: "User",
-        }),
-      }
-    );
+    const response = await fetch(`${API_URL}/${agentId}/message`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: input,
+        userId: "user",
+        userName: "User",
+      }),
+    });
 
     const data = await response.json();
     data.forEach((message) => console.log(`${"Agent"}: ${message.text}`));

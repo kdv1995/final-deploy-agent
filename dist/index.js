@@ -34,7 +34,7 @@ var character = {
   name: "Eliza",
   plugins: [],
   clients: [],
-  modelProvider: ModelProviderName.OPENROUTER,
+  modelProvider: ModelProviderName.OPENAI,
   settings: {
     secrets: {},
     voice: {
@@ -431,6 +431,7 @@ var character = {
 };
 
 // src/index.ts
+var API_URL = process.env.API_URL || "http://localhost:3000";
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
 var wait = (minTime = 1e3, maxTime = 3e3) => {
@@ -641,18 +642,15 @@ async function handleUserInput(input, agentId) {
   }
   try {
     const serverPort = parseInt(settings.SERVER_PORT || "3000");
-    const response = await fetch(
-      `http://localhost:${serverPort}/${agentId}/message`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: input,
-          userId: "user",
-          userName: "User"
-        })
-      }
-    );
+    const response = await fetch(`${API_URL}/${agentId}/message`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: input,
+        userId: "user",
+        userName: "User"
+      })
+    });
     const data = await response.json();
     data.forEach((message) => console.log(`${"Agent"}: ${message.text}`));
   } catch (error) {
